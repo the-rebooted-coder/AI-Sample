@@ -1,54 +1,212 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Web Content Q&A Tool</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AiSensy Q&A Tool</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .input-group { margin-bottom: 20px; }
-        textarea, input[type="text"] { width: 100%; padding: 10px; margin: 5px 0; }
-        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
-        #answer { margin-top: 20px; padding: 15px; border: 1px solid #ddd; }
+        /* General Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: #fff;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #007bff;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            color: #555;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Input Group Styles */
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus, input[type="text"]:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* Button Styles */
+        button {
+            padding: 0.75rem 1.5rem;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        /* Answer Section Styles */
+        #answer {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        #answer strong {
+            color: #007bff;
+        }
+
+        /* Status Messages */
+        .status {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .status.error {
+            color: #dc3545;
+        }
+
+        .status.success {
+            color: #28a745;
+        }
     </style>
 </head>
 <body>
-    <h1>Web Content Q&A Tool</h1>
-    
-    <div class="input-group">
-        <h3>Step 1: Input URLs</h3>
-        <textarea id="urls" rows="5" placeholder="Enter one URL per line"></textarea>
-        <button onclick="ingestUrls()">Ingest URLs</button>
-    </div>
+    <div class="container">
+        <h1>AiSensy Q&A Tool</h1>
+        
+        <!-- Step 1: Input URLs -->
+        <div class="input-group">
+            <h3>Step 1: Input URLs</h3>
+            <textarea id="urls" rows="5" placeholder="Enter one URL per line"></textarea>
+            <button onclick="ingestUrls()">Ingest URLs</button>
+            <p id="ingest-status" class="status"></p>
+        </div>
 
-    <div class="input-group">
-        <h3>Step 2: Ask a Question</h3>
-        <input type="text" id="question" placeholder="Your question...">
-        <button onclick="askQuestion()">Ask</button>
-    </div>
+        <!-- Step 2: Ask a Question -->
+        <div class="input-group">
+            <h3>Step 2: Ask a Question</h3>
+            <input type="text" id="question" placeholder="Your question...">
+            <button onclick="askQuestion()">Ask</button>
+            <p id="question-status" class="status"></p>
+        </div>
 
-    <div id="answer"></div>
+        <!-- Answer Section -->
+        <div id="answer">
+            <p><strong>Question:</strong> <span id="question-text"></span></p>
+            <p><strong>Answer:</strong> <span id="answer-text"></span></p>
+        </div>
+    </div>
 
     <script>
         async function ingestUrls() {
             const urls = document.getElementById('urls').value.split('\n').filter(url => url.trim());
-            const response = await fetch('/ingest', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ urls })
-            });
-            alert(await response.text());
+            if (urls.length === 0) {
+                document.getElementById('ingest-status').textContent = "Please enter at least one URL.";
+                document.getElementById('ingest-status').className = "status error";
+                return;
+            }
+
+            document.getElementById('ingest-status').textContent = "Ingesting URLs...";
+            document.getElementById('ingest-status').className = "status";
+
+            try {
+                const response = await fetch('/ingest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ urls })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('ingest-status').textContent = data.message || "URLs ingested successfully!";
+                    document.getElementById('ingest-status').className = "status success";
+                } else {
+                    document.getElementById('ingest-status').textContent = data.error || "Failed to ingest URLs.";
+                    document.getElementById('ingest-status').className = "status error";
+                }
+            } catch (error) {
+                document.getElementById('ingest-status').textContent = "An error occurred while ingesting URLs.";
+                document.getElementById('ingest-status').className = "status error";
+                console.error(error);
+            }
         }
 
         async function askQuestion() {
             const question = document.getElementById('question').value;
-            const response = await fetch('/ask', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question })
-            });
-            
-            const data = await response.json();
-            document.getElementById('answer').innerHTML = 
-                data.answer || data.error || "No answer found in the provided content";
+            if (!question) {
+                document.getElementById('question-status').textContent = "Please enter a question.";
+                document.getElementById('question-status').className = "status error";
+                return;
+            }
+
+            document.getElementById('question-text').textContent = question;
+            document.getElementById('answer-text').textContent = "";
+            document.getElementById('question-status').textContent = "Asking question...";
+            document.getElementById('question-status').className = "status";
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('answer-text').textContent = data.answer || "No answer found.";
+                    document.getElementById('question-status').textContent = "Success!";
+                    document.getElementById('question-status').className = "status success";
+                } else {
+                    document.getElementById('question-status').textContent = data.error || "Failed to get an answer.";
+                    document.getElementById('question-status').className = "status error";
+                }
+            } catch (error) {
+                document.getElementById('question-status').textContent = "An error occurred while asking the question.";
+                document.getElementById('question-status').className = "status error";
+                console.error(error);
+            }
         }
     </script>
 </body>
