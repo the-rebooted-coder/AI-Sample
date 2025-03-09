@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Web Content Q&A Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .input-group { margin-bottom: 20px; }
+        textarea, input[type="text"] { width: 100%; padding: 10px; margin: 5px 0; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        #answer { margin-top: 20px; padding: 15px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>Web Content Q&A Tool</h1>
+    
+    <div class="input-group">
+        <h3>Step 1: Input URLs</h3>
+        <textarea id="urls" rows="5" placeholder="Enter one URL per line"></textarea>
+        <button onclick="ingestUrls()">Ingest URLs</button>
+    </div>
+
+    <div class="input-group">
+        <h3>Step 2: Ask a Question</h3>
+        <input type="text" id="question" placeholder="Your question...">
+        <button onclick="askQuestion()">Ask</button>
+    </div>
+
+    <div id="answer"></div>
+
+    <script>
+        async function ingestUrls() {
+            const urls = document.getElementById('urls').value.split('\n').filter(url => url.trim());
+            const response = await fetch('/ingest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ urls })
+            });
+            alert(await response.text());
+        }
+
+        async function askQuestion() {
+            const question = document.getElementById('question').value;
+            const response = await fetch('/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question })
+            });
+            
+            const data = await response.json();
+            document.getElementById('answer').innerHTML = 
+                data.answer || data.error || "No answer found in the provided content";
+        }
+    </script>
+</body>
+</html>
