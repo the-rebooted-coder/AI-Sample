@@ -1,0 +1,7 @@
+flask==3.0.0
+flask-cors==4.0.0
+langchain==0.0.346
+openai==0.28.0
+beautifulsoup4==4.12.2
+faiss-cpu==1.7.4
+tiktoken==0.5.1
